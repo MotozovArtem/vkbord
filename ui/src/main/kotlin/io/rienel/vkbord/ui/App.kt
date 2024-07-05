@@ -6,12 +6,15 @@ import io.rienel.vkbord.ui.view.MainForm
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.koin.java.KoinJavaComponent.inject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.awt.Robot
+import java.awt.event.KeyEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.JFrame
@@ -32,6 +35,8 @@ class App(
 
     private val mainForm = MainForm("vkbord-${version}")
     private val charFlow: CharFlow by inject(CharFlow::class.java)
+    private var robotJob: Job? = null
+    private val robot = Robot()
 
 
     fun start() {
@@ -66,11 +71,18 @@ class App(
 
             isVisible = true
         }
+        robotJob = coroutineScope.launch {
+            charFlow.translated.collect {
+                robot.keyPress(KeyEvent.getExtendedKeyCodeForChar(it.code))
+                log.debug("Robot key pressed: {}", it)
+            }
+        }
         log.info("Application started.")
     }
 
     private fun onClose() {
         log.info("Closing application")
+        robotJob?.cancel()
         coroutineScope.cancel()
         charFlow.close()
         log.info("Application closed")

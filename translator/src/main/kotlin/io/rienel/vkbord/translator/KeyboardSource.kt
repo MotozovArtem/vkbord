@@ -40,8 +40,14 @@ class CharFlow(
                 if (e == null)
                     return
 
-                log.info("Received event: {'keyChar'={}, 'keyCode'={}, 'rawCode'={}}", e.keyChar, e.keyCode, e.rawCode)
-                trySend(e.rawCode.toChar())
+                log.info(
+                    "Received event: {'keyChar'={}, 'keyCode'={}, 'rawCode'={}, 'keyText'={}}",
+                    e.keyChar,
+                    e.keyCode,
+                    e.rawCode,
+                    NativeKeyEvent.getKeyText(e.keyCode)
+                )
+                trySend(NativeKeyEvent.getKeyText(e.keyCode).first())
                     .onFailure { ex ->
                         log.error("Cannot send keyChar: {}", e.keyChar, ex)
                     }
